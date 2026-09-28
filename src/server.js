@@ -16,8 +16,8 @@ const startServer = async () => {
 
 
         const PORT = env.port || 5000;
-        server = app.listen(PORT, () => {
-            console.log(`Server is running beautifully on port ${PORT}`);
+        server = app.listen(PORT, '0.0.0.0', () => {
+            console.log(`Server running on port ${PORT}`);
         });
     } catch (error) {
         console.error('Fatal startup error:', error.message);
