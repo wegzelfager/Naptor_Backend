@@ -1,0 +1,231 @@
+const env = require('../config/env');
+const userRepo = require('../repositories/user.repository')
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const crypto = require('crypto');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('./email.service');
+const User = require('../models/user.model');
+const { createVerificationToken, createPasswordResetToken } = require('../utils/verficationToken');
+
+const generateAccessToken = (userId) => {
+    return jwt.sign(
+        { id: userId },
+        env.jwtAccessSecret,
+        { expiresIn: env.accessTokenExpiry || '15m' }
+    );
+};
+
+const generateRefreshToken = (userId) => {
+    return jwt.sign(
+        { id: userId },
+        env.jwtRefreshSecret,
+        { expiresIn: env.refreshTokenExpiry || '7d' }
+    );
+};
+
+const login = async (email, password) => {
+    try {
+        console.log("👉 1. Starting login service...");
+
+        const user = await userRepo.findUserByEmail(email);
+        console.log("👉 2. User found:", user?._id);
+
+        if (!user) {
+            const error = new Error('invalid input data');
+            error.statusCode = 401;
+            throw error;
+        }
+
+        console.log("👉 3. Checking password with bcrypt...");
+        const isPasswordMatch = await bcrypt.compare(password, user.password);
+        console.log("👉 4. Password match result:", isPasswordMatch);
+
+        if (!isPasswordMatch) {
+            const error = new Error('invalid email or password');
+            error.statusCode = 401;
+            throw error;
+        }
+
+        console.log("👉 5. Generating tokens...");
+        const accessToken = generateAccessToken(user._id);
+        const refreshToken = generateRefreshToken(user._id);
+
+        console.log("👉 6. Updating refresh token in MongoDB...");
+        await userRepo.updateRefreshToken(user._id, refreshToken);
+        console.log("👉 7. Refresh token updated!");
+
+        return { accessToken, refreshToken };
+
+    } catch (error) {
+        console.error("❌ Error inside service:", error);
+        throw error;
+    }
+}
+
+const refreshTheToken = async (oldRefreshToken) => {
+    try {
+        const decoded = jwt.verify(
+            oldRefreshToken,
+            env.jwtRefreshSecret
+        )
+
+        const user = await userRepo.findByRefreshToken(oldRefreshToken);
+        if (!user) {
+            const error = new Error('Invalid or expired refresh token');
+            error.statusCode = 403;
+            throw error;
+        }
+
+        const accessToken = generateAccessToken(user._id);
+        return { accessToken }
+
+    } catch (error) {
+        const authError = new Error('Invalid or expired refresh token');
+        authError.statusCode = 403;
+        throw authError;
+    }
+}
+const register = async (name, email, password) => {
+    try {
+        const existingUser = await userRepo.findUserByEmail(email);
+
+        if (existingUser) {
+
+            if (existingUser.isVerified) {
+                const error = new Error("email already exists");
+                error.statusCode = 409;
+                throw error;
+            }
+
+
+            console.log(`[Register] Unverified account found for ${email}. Resending verification email.`);
+            const verificationToken = createVerificationToken();
+            await existingUser.save();
+
+            const verificationUrl = `http://localhost:4200/verify-email?token=${verificationToken}`;
+            sendVerificationEmail({
+                userEmail: email,
+                userName: name,
+                verificationUrl
+            }).catch(err => console.error('[Verification Email Error]:', err));
+
+            return existingUser;
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newUser = new User({
+            name,
+            email,
+            password: hashedPassword
+        });
+
+        const verificationToken = newUser.createVerificationToken();
+        await newUser.save();
+
+        const verificationUrl = `http://localhost:4200/verify-email?token=${verificationToken}`;
+
+        sendVerificationEmail({
+            userEmail: email,
+            userName: name,
+            verificationUrl
+        }).catch(err => console.error('[Verification Email Error]:', err));
+
+        return newUser;
+    } catch (error) {
+        throw error;
+    }
+};
+
+const resetPassword = async (email) => {
+    const user = await userRepo.findUserByEmail(email);
+    if (!user) {
+        const error = new Error('user not found');
+        error.statusCode = 404;
+        throw error;
+    }
+    const resetToken = createPasswordResetToken();
+    user.passwordResetToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+    user.passwordResetTokenExpires = Date.now() + 15 * 60 * 1000;
+    await user.save();
+    const resetUrl = `http://localhost:4200/reset-password?token=${resetToken}`;
+    sendPasswordResetEmail({
+        userEmail: email,
+        userName: user.name || 'User',
+        resetUrl
+    }).catch(err => console.error('[Reset Password Email Error]:', err));
+    return user;
+}
+
+const resetNewPassword = async (token, newPassword) => {
+    try {
+        if (!token) {
+            const error = new Error('Token is required');
+            error.statusCode = 401;
+            throw error;
+        }
+
+        const hashedToken = crypto.createHash('sha256')
+            .update(token)
+            .digest('hex');
+
+        const user = await userRepo.findByResetPasswordToken(hashedToken);
+        if (!user) {
+            const error = new Error('Invalid reset password token');
+            error.statusCode = 401;
+            throw error;
+        }
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        user.password = hashedPassword;
+        user.passwordResetToken = undefined;
+        user.passwordResetTokenExpires = undefined;
+        await user.save();
+        return user;
+    } catch (error) {
+        throw error;
+    }
+}
+
+const verifyEmail = async (token) => {
+    try {
+        if (!token) {
+            const error = new Error('Token is required');
+            error.statusCode = 401;
+            throw error;
+        }
+
+        const hashedToken = crypto.createHash('sha256')
+            .update(token)
+            .digest('hex');
+
+        const user = await userRepo.findByVerificationToken(hashedToken);
+        if (!user) {
+            const error = new Error('Invalid verification token');
+            error.statusCode = 401;
+            throw error;
+        }
+        user.isVerified = true;
+        user.verificationToken = undefined;
+        user.verificationTokenExpires = undefined;
+        await user.save();
+        return user;
+
+
+    } catch (error) {
+        throw error;
+    }
+}
+module.exports = {
+    login,
+    refreshTheToken,
+    register,
+    verifyEmail,
+    resetPassword,
+    restePassword: resetPassword,
+    resetNewPassword
+};

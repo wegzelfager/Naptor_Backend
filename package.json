@@ -1,0 +1,29 @@
+{
+  "name": "naptor-backend",
+  "version": "1.0.0",
+  "description": "N-Tier Layered Architecture backend for Login & Refresh Token system",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon"
+  },
+  "dependencies": {
+    "axios": "^1.18.1",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.6.1",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.24.1",
+    "node-cron": "^4.6.0",
+    "nodemailer": "^9.0.3",
+    "redis": "^6.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.3"
+  }
+}
