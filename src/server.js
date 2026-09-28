@@ -9,13 +9,13 @@ let server;
 
 const startServer = async () => {
     try {
-
         await dbConnection();
 
         startMonitorWorker();
 
-
-        const PORT = env.port || 5000;
+        
+        const PORT = process.env.PORT || env.port || 5000;
+        
         server = app.listen(PORT, '0.0.0.0', () => {
             console.log(`Server running on port ${PORT}`);
         });
@@ -25,13 +25,11 @@ const startServer = async () => {
     }
 };
 
-
 process.on('uncaughtException', (err) => {
     console.error('UNCAUGHT EXCEPTION! Shutting down...');
     console.error(err.name, err.message, err.stack);
     process.exit(1);
 });
-
 
 process.on('unhandledRejection', (err) => {
     console.error('UNHANDLED REJECTION! Shutting down...');
