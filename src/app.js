@@ -1,4 +1,4 @@
-const dotenv = require('dotenv')
+﻿const dotenv = require('dotenv')
 const path = require('path')
 dotenv.config({ path: path.join(__dirname, '../.env') })
 const express = require('express')
@@ -15,7 +15,7 @@ const alertRouter = require('../alerts/routes/alert.router');
 const userRouter = require('./routes/user.rotues');
 const app = express()
 
-app.use(cors(corsOptions))
+// app.use(cors(corsOptions))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
