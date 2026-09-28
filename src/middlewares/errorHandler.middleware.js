@@ -24,7 +24,7 @@ const errorMidlleware = (err, req, res, next) => {
     if (err.code === 11000) {   
         return res.status(409).json({
             status: "error",
-            message: ` already exists. Please use a different value.`,
+            message: `Email already exists. Please use a different value.`,
         })
     }
 
@@ -33,6 +33,13 @@ const errorMidlleware = (err, req, res, next) => {
         return res.status(422).json({
             status: "error",
             message: messages.join(". "),
+        });
+    }
+
+    if (err.statusCode) {
+        return res.status(err.statusCode).json({
+            status: "error",
+            message: err.message,
         });
     }
 

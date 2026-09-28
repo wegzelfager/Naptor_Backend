@@ -90,26 +90,9 @@ const register = async (name, email, password) => {
         const existingUser = await userRepo.findUserByEmail(email);
 
         if (existingUser) {
-
-            if (existingUser.isVerified) {
-                const error = new Error("email already exists");
-                error.statusCode = 409;
-                throw error;
-            }
-
-
-            console.log(`[Register] Unverified account found for ${email}. Resending verification email.`);
-            const verificationToken = createVerificationToken();
-            await existingUser.save();
-
-            const verificationUrl = `http://localhost:4200/verify-email?token=${verificationToken}`;
-            sendVerificationEmail({
-                userEmail: email,
-                userName: name,
-                verificationUrl
-            }).catch(err => console.error('[Verification Email Error]:', err));
-
-            return existingUser;
+            const error = new Error("Email already exists. Please use a different value.");
+            error.statusCode = 409;
+            throw error;
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -124,7 +107,8 @@ const register = async (name, email, password) => {
         const verificationToken = newUser.createVerificationToken();
         await newUser.save();
 
-        const verificationUrl = `http://localhost:4200/verify-email?token=${verificationToken}`;
+        const baseUrl = env.clientUrl || 'http://localhost:4200';
+        const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
 
         sendVerificationEmail({
             userEmail: email,
@@ -152,7 +136,8 @@ const resetPassword = async (email) => {
         .digest('hex');
     user.passwordResetTokenExpires = Date.now() + 15 * 60 * 1000;
     await user.save();
-    const resetUrl = `http://localhost:4200/reset-password?token=${resetToken}`;
+    const baseUrl = env.clientUrl || 'http://localhost:4200';
+    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
     sendPasswordResetEmail({
         userEmail: email,
         userName: user.name || 'User',
