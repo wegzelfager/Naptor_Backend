@@ -13,9 +13,9 @@ const startServer = async () => {
 
         startMonitorWorker();
 
-        
+
         const PORT = process.env.PORT || env.port || 5000;
-        
+
         server = app.listen(PORT, '0.0.0.0', () => {
             console.log(`=========================================`);
             console.log(`🚀 SERVER RUNNING SUCCESSFULLY ON 0.0.0.0:${PORT}`);
