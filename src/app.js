@@ -1,4 +1,4 @@
-﻿const dotenv = require('dotenv')
+const dotenv = require('dotenv')
 const path = require('path')
 dotenv.config({ path: path.join(__dirname, '../.env') })
 const express = require('express')
@@ -20,9 +20,13 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 
-app.get('/health', protect, (req, res) => {
-  res.send('Server is up and running smoothly!')
-})
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Naptor Backend API is running' });
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Server is up and running smoothly!' });
+});
 
 app.use('/api/auth', authRouter)
 app.use('/api/monitors', monitorRouter)
