@@ -17,7 +17,10 @@ const startServer = async () => {
         const PORT = process.env.PORT || env.port || 5000;
         
         server = app.listen(PORT, '0.0.0.0', () => {
-            console.log(`Server running on port ${PORT}`);
+            console.log(`=========================================`);
+            console.log(`🚀 SERVER RUNNING SUCCESSFULLY ON 0.0.0.0:${PORT}`);
+            console.log(`👉 process.env.PORT is: ${process.env.PORT || 'undefined (using fallback 5000)'}`);
+            console.log(`=========================================`);
         });
     } catch (error) {
         console.error('Fatal startup error:', error.message);
