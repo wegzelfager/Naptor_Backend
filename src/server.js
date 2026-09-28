@@ -14,14 +14,26 @@ const startServer = async () => {
         startMonitorWorker();
 
 
-        const PORT = process.env.PORT || env.port || 5000;
+        const primaryPort = Number(process.env.PORT) || 8080;
 
-        server = app.listen(PORT, '0.0.0.0', () => {
+        server = app.listen(primaryPort, '0.0.0.0', () => {
             console.log(`=========================================`);
-            console.log(`🚀 SERVER RUNNING SUCCESSFULLY ON 0.0.0.0:${PORT}`);
-            console.log(`👉 process.env.PORT is: ${process.env.PORT || 'undefined (using fallback 5000)'}`);
+            console.log(`🚀 Primary server running on 0.0.0.0:${primaryPort}`);
+            console.log(`👉 process.env.PORT is: ${process.env.PORT || 'undefined'}`);
             console.log(`=========================================`);
         });
+
+        const secondaryPort = primaryPort === 5000 ? 8080 : 5000;
+        try {
+            const backupServer = app.listen(secondaryPort, '0.0.0.0', () => {
+                console.log(`🚀 Secondary listener active on 0.0.0.0:${secondaryPort}`);
+            });
+            backupServer.on('error', (err) => {
+                console.log(`[Notice] Port ${secondaryPort} listener:`, err.message);
+            });
+        } catch (e) {
+            // Ignore if secondary port fails to bind
+        }
     } catch (error) {
         console.error('Fatal startup error:', error.message);
         process.exit(1);
