@@ -46,6 +46,12 @@ const login = async (email, password) => {
             throw error;
         }
 
+        if (!user.isVerified) {
+            const error = new Error('Please verify your email address before logging in. Check your inbox for the activation link.');
+            error.statusCode = 403;
+            throw error;
+        }
+
         console.log("👉 5. Generating tokens...");
         const accessToken = generateAccessToken(user._id);
         const refreshToken = generateRefreshToken(user._id);
@@ -90,9 +96,37 @@ const register = async (name, email, password) => {
         const existingUser = await userRepo.findUserByEmail(email);
 
         if (existingUser) {
-            const error = new Error("Email already exists. Please use a different value.");
-            error.statusCode = 409;
-            throw error;
+            if (existingUser.isVerified) {
+                const error = new Error("Email already exists. Please use a different value.");
+                error.statusCode = 409;
+                throw error;
+            }
+
+            // User registered previously but has not verified their email yet.
+            // Update name, password and send a fresh verification email.
+            const salt = await bcrypt.genSalt(10);
+            existingUser.password = await bcrypt.hash(password, salt);
+            existingUser.name = name;
+            const verificationToken = existingUser.createVerificationToken();
+            await existingUser.save();
+
+            const baseUrl = env.clientUrl || 'https://naptor-fronted-tau.vercel.app';
+            const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
+
+            try {
+                await sendVerificationEmail({
+                    userEmail: email,
+                    userName: name,
+                    verificationUrl
+                });
+            } catch (emailErr) {
+                console.error('[Register] Resending verification email failed:', emailErr.message);
+                const error = new Error('Failed to send verification email. Please try again later.');
+                error.statusCode = 500;
+                throw error;
+            }
+
+            return existingUser;
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -213,6 +247,39 @@ const verifyEmail = async (token) => {
         throw error;
     }
 }
+const resendVerificationEmail = async (email) => {
+    try {
+        const user = await userRepo.findUserByEmail(email);
+        if (!user) {
+            const error = new Error('No account found with this email address.');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        if (user.isVerified) {
+            const error = new Error('Account is already verified. You can log in directly.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const verificationToken = user.createVerificationToken();
+        await user.save();
+
+        const baseUrl = env.clientUrl || 'https://naptor-fronted-tau.vercel.app';
+        const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
+
+        await sendVerificationEmail({
+            userEmail: user.email,
+            userName: user.name || 'User',
+            verificationUrl
+        });
+
+        return { message: 'Verification email sent successfully' };
+    } catch (error) {
+        throw error;
+    }
+};
+
 module.exports = {
     login,
     refreshTheToken,
@@ -220,5 +287,6 @@ module.exports = {
     verifyEmail,
     resetPassword,
     restePassword: resetPassword,
-    resetNewPassword
+    resetNewPassword,
+    resendVerificationEmail
 };

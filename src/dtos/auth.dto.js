@@ -46,4 +46,10 @@ const verifyEmailSchema = z.object({
     })
 })
 
-module.exports = { loginSchema, registerSchema, resetPasswordSchema, resetNewPasswordSchema, verifyEmailSchema };
+const resendVerificationSchema = z.object({
+    body: z.object({
+        email: z.string({ required_error: "email is required" }).email("invalid email type")
+    })
+});
+
+module.exports = { loginSchema, registerSchema, resetPasswordSchema, resetNewPasswordSchema, verifyEmailSchema, resendVerificationSchema };

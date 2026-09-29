@@ -44,7 +44,7 @@ const register = async (req, res, next) => {
         await authService.register(name, email, password);
         res.status(201).json({
             status: 'success',
-            message: 'User registered successfully. Please log in.'
+            message: 'Registration successful. Please verify your email before logging in.'
         })
     } catch (error) {
         next(error);
@@ -91,4 +91,17 @@ const resetNewPassword = async (req, res, next) => {
     }
 }
 
-module.exports = { login, refresh, register, verifyEmail, resetPassword, resetNewPassword };
+const resendVerification = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        await authService.resendVerificationEmail(email);
+        res.status(200).json({
+            status: 'success',
+            message: 'A fresh verification link has been sent to your email.'
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+module.exports = { login, refresh, register, verifyEmail, resetPassword, resetNewPassword, resendVerification };
