@@ -102,8 +102,7 @@ const register = async (name, email, password) => {
                 throw error;
             }
 
-            // User registered previously but has not verified their email yet.
-            // Update name, password and send a fresh verification email.
+
             const salt = await bcrypt.genSalt(10);
             existingUser.password = await bcrypt.hash(password, salt);
             existingUser.name = name;
