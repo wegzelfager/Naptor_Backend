@@ -53,12 +53,20 @@ const register = async (req, res, next) => {
 
 const verifyEmail = async (req, res, next) => {
     try {
-        const { token } = req.params;
-        await authService.verifyEmail(token);
+        const token = req.query.token || req.params.token || req.body?.token;
+        const result = await authService.verifyEmail(token);
+
+        if (result && result.alreadyVerified) {
+            return res.status(200).json({
+                status: 'success',
+                message: 'Email already verified. You can log in.',
+            });
+        }
+
         res.status(200).json({
             status: 'success',
-            message: 'Email verified successfully. You can now log in.'
-        })
+            message: 'Email verified successfully. You can now log in.',
+        });
     } catch (error) {
         next(error);
     }

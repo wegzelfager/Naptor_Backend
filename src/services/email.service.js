@@ -52,19 +52,17 @@ let _transporter = null;
 const getTransporter = () => {
     if (!_transporter) {
         const port = Number(process.env.SMTP_PORT) || 587;
-        const secure = port === 465;
+        const secure = process.env.SMTP_SECURE === 'true' || port === 465;
         _transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
-            port,
-            secure,
-            requireTLS: !secure,
+            port: port,
+            secure: secure, // false for port 587 (STARTTLS)
             auth: {
-                type: 'login',
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS
             },
-            connectionTimeout: 10000,
-            greetingTimeout: 8000,
+            connectionTimeout: 10000, // 10-second connection timeout
+            greetingTimeout: 10000,
             socketTimeout: 15000,
         });
     }
@@ -141,7 +139,7 @@ const sendVerificationEmail = async ({ userEmail, userName, verificationUrl }) =
                         <a href="${verificationUrl}" style="background-color: #6366f1; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Verify Email Address</a>
                     </div>
                     <p style="color: #9ca3af; font-size: 0.875rem;">If you did not create an account, you can safely ignore this email.</p>
-                    <p style="color: #9ca3af; font-size: 0.875rem;">This link will expire in 24 hours.</p>
+                    <p style="color: #9ca3af; font-size: 0.875rem;">This link will expire in 15 minutes.</p>
                 </div>
             `
         });

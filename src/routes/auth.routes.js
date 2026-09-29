@@ -14,6 +14,7 @@ router.get('/verify-email', (req, res, next) => {
     return res.status(400).json({ status: 'error', message: 'Verification token is required' });
 });
 router.get('/verify-email/:token', validate(verifyEmailSchema), verifyEmail);
+router.post('/verify-email', verifyEmail);
 router.post('/reset-password', validate(resetPasswordSchema), resetPassword);
 router.post('/reset-new-password', validate(resetNewPasswordSchema), resetNewPassword);
 router.post('/resend-verification', validate(resendVerificationSchema), resendVerification);
