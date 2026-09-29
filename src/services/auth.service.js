@@ -112,18 +112,14 @@ const register = async (name, email, password) => {
             const baseUrl = env.clientUrl || 'https://naptor-fronted-tau.vercel.app';
             const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
 
-            try {
-                await sendVerificationEmail({
-                    userEmail: email,
-                    userName: name,
-                    verificationUrl
-                });
-            } catch (emailErr) {
-                console.error('[Register] Resending verification email failed:', emailErr.message);
-                const error = new Error('Failed to send verification email. Please try again later.');
-                error.statusCode = 500;
-                throw error;
-            }
+            // Fire-and-forget: don't fail the request if email fails
+            sendVerificationEmail({
+                userEmail: email,
+                userName: name,
+                verificationUrl
+            }).catch(emailErr => {
+                console.error('[Register] Resend verification email failed (user kept):', emailErr.message, emailErr.code || '');
+            });
 
             return existingUser;
         }
@@ -143,19 +139,14 @@ const register = async (name, email, password) => {
         const baseUrl = env.clientUrl || 'https://naptor-fronted-tau.vercel.app';
         const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
 
-        try {
-            await sendVerificationEmail({
-                userEmail: email,
-                userName: name,
-                verificationUrl
-            });
-        } catch (emailErr) {
-            console.error('[Register] Email sending failed, rolling back user creation:', emailErr.message);
-            await User.findByIdAndDelete(newUser._id);
-            const error = new Error('Failed to send verification email. Please try again later.');
-            error.statusCode = 500;
-            throw error;
-        }
+        // Fire-and-forget: user is created even if email fails
+        sendVerificationEmail({
+            userEmail: email,
+            userName: name,
+            verificationUrl
+        }).catch(emailErr => {
+            console.error('[Register] Verification email failed (user still created):', emailErr.message, emailErr.code || '');
+        });
 
         return newUser;
     } catch (error) {
