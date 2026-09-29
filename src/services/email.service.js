@@ -5,12 +5,12 @@ let _transporter = null;
 const getTransporter = () => {
     if (!_transporter) {
         const port = Number(process.env.SMTP_PORT) || 587;
-        const secure = port === 465; // true for 465 (SSL), false for 587 (STARTTLS)
+        const secure = port === 465;
         _transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port,
             secure,
-            requireTLS: !secure, // only require STARTTLS upgrade when NOT using SSL
+            requireTLS: !secure,
             auth: {
                 type: 'login',
                 user: process.env.SMTP_USER,
@@ -83,9 +83,10 @@ const sendVerificationEmail = async ({ userEmail, userName, verificationUrl }) =
                     </div>
                 `
         })
-        console.log(`[Alert Email]: Email sent to ${userEmail}`);
+        console.log(`[Verification Email]: Sent successfully to ${userEmail}`);
     } catch (error) {
-        console.error(`[Alert Email Error]: Failed to send email to ${userEmail}`, error);
+        console.error(`[Verification Email Error]: Failed to send to ${userEmail}`, error.message);
+        throw error; // 🔁 rethrow so register can rollback user creation
     }
 }
 
@@ -107,9 +108,10 @@ const sendPasswordResetEmail = async ({ userEmail, userName, resetUrl }) => {
                     </div>
                 `
         })
-        console.log(`[Alert Email]: Email sent to ${userEmail}`);
+        console.log(`[Reset Email]: Sent successfully to ${userEmail}`);
     } catch (error) {
-        console.error(`[Alert Email Error]: Failed to send email to ${userEmail}`, error);
+        console.error(`[Reset Email Error]: Failed to send to ${userEmail}`, error.message);
+        throw error; // 🔁 rethrow so caller can handle the failure
     }
 }
 module.exports = { sendDownAlert, sendUpAlert, sendVerificationEmail, sendPasswordResetEmail };

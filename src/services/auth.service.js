@@ -110,11 +110,19 @@ const register = async (name, email, password) => {
         const baseUrl = env.clientUrl || 'https://naptor-fronted-tau.vercel.app';
         const verificationUrl = `${baseUrl}/verify-email/${verificationToken}`;
 
-        sendVerificationEmail({
-            userEmail: email,
-            userName: name,
-            verificationUrl
-        }).catch(err => console.error('[Verification Email Error]:', err));
+        try {
+            await sendVerificationEmail({
+                userEmail: email,
+                userName: name,
+                verificationUrl
+            });
+        } catch (emailErr) {
+            console.error('[Register] Email sending failed, rolling back user creation:', emailErr.message);
+            await User.findByIdAndDelete(newUser._id);
+            const error = new Error('Failed to send verification email. Please try again later.');
+            error.statusCode = 500;
+            throw error;
+        }
 
         return newUser;
     } catch (error) {
