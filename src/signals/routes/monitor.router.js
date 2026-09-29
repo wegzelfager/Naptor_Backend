@@ -1,7 +1,7 @@
 const express = require('express')
 const { signalRouter } = require('./heartbeat.routes')
 const validate = require('../../middlewares/validate.middleware')
-const { createMonitorSchema, globalUpdateMonitorStatusSchema } = require('../../dtos/signal.dto')
+const { createMonitorSchema, globalUpdateMonitorStatusSchema, monitorIdParamSchema } = require('../../dtos/signal.dto')
 const { updateStatusSchema } = require('../../dtos/signal.dto')
 const {
   createMonitorController,
@@ -20,12 +20,12 @@ monitorRouter.use(protect)
 monitorRouter.get('/', getMonitorsController)
 
 
-monitorRouter.get('/:id', getMonitorByIdController)
+monitorRouter.get('/:id', validate(monitorIdParamSchema), getMonitorByIdController)
 
 const { getHeartbeatsController } = require('../controllers/heartbeat.controller')
-monitorRouter.get('/:id/heartbeats', getHeartbeatsController)
+monitorRouter.get('/:id/heartbeats', validate(monitorIdParamSchema), getHeartbeatsController)
 
-monitorRouter.delete('/:id', deletedMonitorController)
+monitorRouter.delete('/:id', validate(monitorIdParamSchema), deletedMonitorController)
 
 
 monitorRouter.post(

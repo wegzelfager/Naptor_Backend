@@ -58,6 +58,15 @@ const deleteMonitorSchema = z.object({
   })
 })
 
+// Reusable — GET /:id, GET /:id/heartbeats, DELETE /:id
+const monitorIdParamSchema = z.object({
+  params: z.object({
+    id: z
+      .string({ required_error: 'Monitor ID is required' })
+      .regex(/^[0-9a-fA-F]{24}$/, 'Invalid MongoDB ObjectId format')
+  })
+})
+
 const updateStatusSchema = z.object({
   params: z.object({
     id: z.string().regex(/^[0-9a-fA-F]{24}$/, {
@@ -95,6 +104,7 @@ const globalUpdateMonitorStatusSchema = z.object({
 module.exports = {
   createMonitorSchema,
   deleteMonitorSchema,
+  monitorIdParamSchema,
   getMonitorHistorySchema,
   updateStatusSchema,
   globalUpdateMonitorStatusSchema

@@ -37,4 +37,13 @@ const resetNewPasswordSchema = z.object({
     path: ["token"]
 })
 
-module.exports = { loginSchema, registerSchema, resetPasswordSchema, resetNewPasswordSchema };
+// GET /auth/verify-email/:token
+const verifyEmailSchema = z.object({
+    params: z.object({
+        token: z
+            .string({ required_error: 'Verification token is required' })
+            .min(10, 'Invalid verification token')
+    })
+})
+
+module.exports = { loginSchema, registerSchema, resetPasswordSchema, resetNewPasswordSchema, verifyEmailSchema };

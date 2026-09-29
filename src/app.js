@@ -30,6 +30,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/auth', authRouter)
+app.use('/api/v1/auth', authRouter)
 app.use('/api/monitors', monitorRouter)
 app.use('/api/incidents', incidentRouter)
 app.use('/api/v1/incidents', incidentRouter)

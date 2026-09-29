@@ -107,8 +107,8 @@ const register = async (name, email, password) => {
         const verificationToken = newUser.createVerificationToken();
         await newUser.save();
 
-        const baseUrl = env.clientUrl || 'http://localhost:4200';
-        const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
+        const baseUrl = env.clientUrl || 'https://naptor-fronted-tau.vercel.app';
+        const verificationUrl = `${baseUrl}/verify-email/${verificationToken}`;
 
         sendVerificationEmail({
             userEmail: email,
@@ -136,7 +136,7 @@ const resetPassword = async (email) => {
         .digest('hex');
     user.passwordResetTokenExpires = Date.now() + 15 * 60 * 1000;
     await user.save();
-    const baseUrl = env.clientUrl || 'http://localhost:4200';
+    const baseUrl = env.clientUrl || 'https://naptor-fronted-tau.vercel.app';
     const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
     sendPasswordResetEmail({
         userEmail: email,
