@@ -108,7 +108,7 @@ const register = async (name, email, password) => {
         await newUser.save();
 
         const baseUrl = env.clientUrl || 'https://naptor-fronted-tau.vercel.app';
-        const verificationUrl = `${baseUrl}/verify-email/${verificationToken}`;
+        const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
 
         try {
             await sendVerificationEmail({
