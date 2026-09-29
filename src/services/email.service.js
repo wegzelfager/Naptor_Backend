@@ -4,16 +4,21 @@ const nodemailer = require('nodemailer');
 let _transporter = null;
 const getTransporter = () => {
     if (!_transporter) {
+        const port = Number(process.env.SMTP_PORT) || 587;
+        const secure = port === 465; // true for 465 (SSL), false for 587 (STARTTLS)
         _transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
-            port: Number(process.env.SMTP_PORT),
-            secure: false,
-            requireTLS: true,
+            port,
+            secure,
+            requireTLS: !secure, // only require STARTTLS upgrade when NOT using SSL
             auth: {
                 type: 'login',
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS
-            }
+            },
+            connectionTimeout: 15000,
+            greetingTimeout: 10000,
+            socketTimeout: 20000,
         });
     }
     return _transporter;
