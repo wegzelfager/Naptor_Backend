@@ -101,7 +101,7 @@ class PingerService {
                     });
                 }
 
-                if (monitor.user?.email) {
+                if (monitor.user?.email && monitor.user?.sendEmail !== false) {
                     await sendDownAlert({
                         userEmail: monitor.user.email,
                         monitorName: monitor.name,
@@ -131,7 +131,7 @@ class PingerService {
                     });
                 }
 
-                if (monitor.user?.email && monitor.user?.sendEmail) {
+                if (monitor.user?.email && monitor.user?.sendEmail !== false) {
                     await sendUpAlert({
                         userEmail: monitor.user.email,
                         monitorName: monitor.name,

@@ -27,7 +27,7 @@ class MonitorRepository {
             isActive: true,
             status: { $ne: 'PAUSED' }
         })
-            .populate('user', 'email')
+            .populate('user', 'email sendEmail')
             .lean();
     }
 
